@@ -15,6 +15,7 @@ interface State {
 	authorities: AuthorityTypes.AuthoritiesRo;
 	nodes: NodeTypes.NodesRo;
 	disabled: boolean;
+	algorithm: string;
 }
 
 const css = {
@@ -25,10 +26,28 @@ const css = {
 		margin: '19px 0 0 0',
 	} as React.CSSProperties,
 	button: {
-		margin: '8px 0 0 8px',
+		margin: '8px 0 0 0',
 	} as React.CSSProperties,
 	buttons: {
 		marginTop: '8px',
+	} as React.CSSProperties,
+	group: {
+		width: '100%',
+	} as React.CSSProperties,
+	select: {
+		width: '100%',
+	} as React.CSSProperties,
+	selectFirst: {
+		width: '100%',
+		borderTopLeftRadius: '3px',
+		borderBottomLeftRadius: '3px',
+	} as React.CSSProperties,
+	selectInner: {
+		width: '100%',
+	} as React.CSSProperties,
+	selectBox: {
+		margin: '8px 0 0 8px',
+		flex: '1',
 	} as React.CSSProperties,
 };
 
@@ -39,6 +58,7 @@ export default class Authorities extends React.Component<{}, State> {
 			authorities: AuthoritiesStore.authorities,
 			nodes: NodesStore.nodes,
 			disabled: false,
+			algorithm: '',
 		};
 	}
 
@@ -80,29 +100,60 @@ export default class Authorities extends React.Component<{}, State> {
 					<h2 style={css.heading}>Authorities</h2>
 					<div className="flex"/>
 					<div style={css.buttons}>
-						<button
-							className="bp3-button bp3-intent-success bp3-icon-add"
-							style={css.button}
-							disabled={this.state.disabled}
-							type="button"
-							onClick={(): void => {
-								this.setState({
-									...this.state,
-									disabled: true,
-								});
-								AuthorityActions.create(null).then((): void => {
+						<div
+							className="bp3-control-group"
+							style={css.group}
+						>
+							<div style={css.selectBox}>
+								<div className="bp3-select" style={css.selectFirst}>
+									<select
+										style={css.selectInner}
+										value={this.state.algorithm}
+										onChange={(evt): void => {
+											this.setState({
+												...this.state,
+												algorithm: evt.target.value,
+											});
+										}}
+									>
+										<option
+											key="rsa4096"
+											value="rsa4096"
+										>RSA 4096</option>
+										<option
+											key="ecp384"
+											value="ecp384"
+										>EC P384</option>
+									</select>
+								</div>
+							</div>
+							<button
+								className="bp3-button bp3-intent-success bp3-icon-add"
+								style={css.button}
+								disabled={this.state.disabled}
+								type="button"
+								onClick={(): void => {
 									this.setState({
 										...this.state,
-										disabled: false,
+										disabled: true,
 									});
-								}).catch((): void => {
-									this.setState({
-										...this.state,
-										disabled: false,
+									AuthorityActions.create({
+										id: null,
+										algorithm: this.state.algorithm,
+									}).then((): void => {
+										this.setState({
+											...this.state,
+											disabled: false,
+										});
+									}).catch((): void => {
+										this.setState({
+											...this.state,
+											disabled: false,
+										});
 									});
-								});
-							}}
-						>New</button>
+								}}
+							>New</button>
+						</div>
 					</div>
 				</div>
 			</PageHeader>

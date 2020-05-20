@@ -66,6 +66,7 @@ type Authority struct {
 	Roles              []string           `bson:"roles" json:"roles"`
 	Expire             int                `bson:"expire" json:"expire"`
 	HostExpire         int                `bson:"host_expire" json:"host_expire"`
+	Algorithm          string             `bson:"algorithm" json:"algorithm"`
 	PrivateKey         string             `bson:"private_key" json:"-"`
 	PublicKey          string             `bson:"public_key" json:"public_key"`
 	PublicKeyPem       string             `bson:"public_key_pem" json:"public_key_pem"`
@@ -144,6 +145,16 @@ func (a *Authority) GenerateEcPrivateKey() (err error) {
 	err = a.SetPublicKeyPem()
 	if err != nil {
 		return
+	}
+
+	return
+}
+
+func (a *Authority) GeneratePrivateKey() (err error) {
+	if a.Algorithm == ECP384 {
+		err = a.GenerateEcPrivateKey()
+	} else {
+		err = a.GenerateRsaPrivateKey()
 	}
 
 	return
@@ -1407,6 +1418,22 @@ func (a *Authority) Validate(db *database.Database) (
 		a.HostSubnets = []string{}
 	}
 
+	switch a.Algorithm {
+	case RSA4096:
+		break
+	case ECP384:
+		break
+	case "":
+		a.Algorithm = RSA4096
+		break
+	default:
+		errData = &errortypes.ErrorData{
+			Error:   "invalid_algorithm",
+			Message: "Invalid algorithm",
+		}
+		return
+	}
+
 	switch a.Type {
 	case Local:
 		a.HsmToken = ""
@@ -1414,7 +1441,7 @@ func (a *Authority) Validate(db *database.Database) (
 		a.HsmSerial = ""
 
 		if a.PrivateKey == "" {
-			err = a.GenerateRsaPrivateKey()
+			err = a.GeneratePrivateKey()
 			if err != nil {
 				return
 			}
